@@ -1,0 +1,52 @@
+[
+  {
+    "name": "case_01",
+    "max": 10,
+    "answers": [7]
+  },
+  {
+    "name": "case_02",
+    "max": 20,
+    "answers": [13]
+  },
+  {
+    "name": "case_03",
+    "max": 1,
+    "answers": [1]
+  },
+  {
+    "name": "case_04",
+    "max": 100,
+    "answers": [33]
+  },
+  {
+    "name": "case_05",
+    "max": 100,
+    "answers": [66]
+  },
+  {
+    "name": "case_06",
+    "max": 1000000,
+    "answers": [867530]
+  },
+  {
+    "name": "case_07",
+    "max": 1000000,
+    "answers": [10]
+  },
+  {
+    "name": "case_08",
+    "max": 1000000,
+    "answers": [999999]
+  },
+  {
+    "name": "case_09",
+    "max": 999991,
+    "adaptive": true
+  },
+  {
+    "name": "case_10",
+    "max": 999990,
+    "adaptive": true
+  }
+]

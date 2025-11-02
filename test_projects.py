@@ -2,12 +2,15 @@
 
 import argparse
 import difflib
+import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parent
 CASE_DIR_NAME = 'cases'
+CONFIG_FILE_NAME = 'test_config.json'
 DEFAULT_BUILD_DIR_NAME = 'build'
 DEFAULT_SOURCE_NAME = 'main.c'
 
@@ -47,6 +50,66 @@ def find_case_dir(project_dir: Path) -> Path | None:
     return None
 
 
+def load_project_config(project_dir: Path) -> dict[str, Any] | None:
+    """Load optional project-specific configuration file.
+
+    Parameters
+    ----------
+    project_dir : Path
+        Directory containing the project sources.
+
+    Returns
+    -------
+    dict[str, Any] | None
+        Parsed configuration dictionary when present.
+    """
+    config_path = project_dir / CONFIG_FILE_NAME
+    if not config_path.is_file():
+        return None
+    with config_path.open('r', encoding='utf-8') as handle:
+        return json.load(handle)
+
+
+def compile_source(project_dir: Path, source_name: str, output_name: str) -> Path:
+    """Compile the provided source file and return the emitted binary path.
+
+    Parameters
+    ----------
+    project_dir : Path
+        Directory containing the project sources.
+    source_name : str
+        Relative source filename to compile.
+    output_name : str
+        Desired output binary name.
+
+    Returns
+    -------
+    Path
+        Filesystem path to the compiled binary.
+    """
+    build_dir = project_dir / DEFAULT_BUILD_DIR_NAME
+    build_dir.mkdir(exist_ok=True)
+    binary_path = build_dir / output_name
+
+    compile_cmd = [
+        'gcc',
+        '-std=c11',
+        '-Wall',
+        '-Wextra',
+        '-O2',
+        str(project_dir / source_name),
+        '-o',
+        str(binary_path),
+    ]
+    result = subprocess.run(compile_cmd, check=False, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Compilation failed for project '{project_dir.name}' "
+            f"(source '{source_name}')\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}",
+        )
+    return binary_path
+
+
 def compile_project(project_dir: Path) -> Path:
     """Compile the project's source file and return the binary path.
 
@@ -60,26 +123,7 @@ def compile_project(project_dir: Path) -> Path:
     Path
         Filesystem path to the compiled binary.
     """
-    build_dir = project_dir / DEFAULT_BUILD_DIR_NAME
-    build_dir.mkdir(exist_ok=True)
-    binary_path = build_dir / project_dir.name
-
-    compile_cmd = [
-        'gcc',
-        '-std=c11',
-        '-Wall',
-        '-Wextra',
-        '-O2',
-        str(project_dir / DEFAULT_SOURCE_NAME),
-        '-o',
-        str(binary_path),
-    ]
-    result = subprocess.run(compile_cmd, check=False, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"Compilation failed for project '{project_dir.name}'\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}",
-        )
-    return binary_path
+    return compile_source(project_dir, DEFAULT_SOURCE_NAME, project_dir.name)
 
 
 def load_case_pairs(case_dir: Path) -> list[tuple[Path, Path]]:
@@ -158,6 +202,161 @@ def run_single_case(binary: Path, input_path: Path, expected_path: Path) -> tupl
     return False, failure
 
 
+def load_interactive_cases(cases_file: Path) -> list[dict[str, Any]]:
+    """Load interactive case definitions in declaration order.
+
+    Parameters
+    ----------
+    cases_file : Path
+        JSON file outlining each interactive case.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Parsed case entries.
+    """
+    with cases_file.open('r', encoding='utf-8') as handle:
+        data = json.load(handle)
+    if not isinstance(data, list):
+        raise TypeError(f"Interactive cases file '{cases_file}' must contain a list.")
+    return data
+
+
+def run_interactive_case(
+    runner_path: Path,
+    cases_file: Path,
+    case_name: str,
+    judge_binary: Path,
+    solution_binary: Path,
+) -> tuple[bool, str]:
+    """Execute a single interactive case via the project runner script.
+
+    Parameters
+    ----------
+    runner_path : Path
+        Path to the runner Python script.
+    cases_file : Path
+        JSON definition listing available cases.
+    case_name : str
+        Identifier for the case to execute.
+    judge_binary : Path
+        Compiled judge binary path.
+    solution_binary : Path
+        Compiled solution binary path.
+
+    Returns
+    -------
+    tuple[bool, str]
+        Success flag and failure explanation (if any).
+    """
+    command = [
+        sys.executable,
+        str(runner_path),
+        '--judge',
+        str(judge_binary),
+        '--solution',
+        str(solution_binary),
+        '--cases-file',
+        str(cases_file),
+        '--case',
+        case_name,
+    ]
+    result = subprocess.run(command, check=False, capture_output=True, text=True)
+    if result.returncode == 0:
+        return True, result.stdout.strip()
+
+    failure = (
+        f"Interactive case '{case_name}' failed.\n"
+        f'stdout:\n{result.stdout}\n'
+        f'stderr:\n{result.stderr}'
+    )
+    return False, failure
+
+
+def test_interactive_project(project_dir: Path, config: dict[str, Any]) -> tuple[bool, list[str]]:
+    """Run interactive tests defined by the project configuration.
+
+    Parameters
+    ----------
+    project_dir : Path
+        Directory containing the interactive project.
+    config : dict[str, Any]
+        Parsed configuration dictionary for the project.
+
+    Returns
+    -------
+    tuple[bool, list[str]]
+        Success flag and any collected error messages.
+    """
+    missing = [
+        key
+        for key in ('runner', 'cases_file', 'judge_source')
+        if not config.get(key)
+    ]
+    if missing:
+        return False, [
+            f"Interactive config for '{project_dir.name}' missing keys: {', '.join(missing)}.",
+        ]
+
+    runner_path = project_dir / config['runner']
+    if not runner_path.is_file():
+        return False, [
+            f"Runner script '{config['runner']}' not found for project '{project_dir.name}'.",
+        ]
+
+    cases_path = project_dir / config['cases_file']
+    if not cases_path.is_file():
+        return False, [
+            f"Cases file '{config['cases_file']}' not found for project '{project_dir.name}'.",
+        ]
+
+    judge_source = config['judge_source']
+    judge_source_path = project_dir / judge_source
+    if not judge_source_path.is_file():
+        return False, [
+            f"Judge source '{judge_source}' not found for project '{project_dir.name}'.",
+        ]
+
+    try:
+        solution_binary = compile_project(project_dir)
+    except RuntimeError as error:
+        return False, [str(error)]
+
+    try:
+        judge_binary = compile_source(project_dir, judge_source, f'{project_dir.name}_judge')
+    except RuntimeError as error:
+        return False, [str(error)]
+
+    try:
+        cases = load_interactive_cases(cases_path)
+    except (OSError, ValueError) as error:
+        return False, [f'Failed to load interactive cases: {error}']
+
+    if not cases:
+        return False, [f"No interactive cases defined in '{cases_path}'."]
+
+    failures: list[str] = []
+    for entry in cases:
+        case_name = entry.get('name')
+        if not case_name:
+            failures.append('Encountered interactive case entry without a name.')
+            continue
+        success, message = run_interactive_case(
+            runner_path,
+            cases_path,
+            case_name,
+            judge_binary,
+            solution_binary,
+        )
+        if not success:
+            failures.append(message)
+            break
+
+    if failures:
+        return False, failures
+    return True, []
+
+
 def test_project(project_name: str) -> tuple[bool, list[str]]:
     """Compile the project and run all cases, collecting any failures.
 
@@ -174,6 +373,10 @@ def test_project(project_name: str) -> tuple[bool, list[str]]:
     project_dir = ROOT / project_name
     if not project_dir.is_dir():
         return False, [f"Project '{project_name}' not found."]
+
+    config = load_project_config(project_dir)
+    if config and config.get('type') == 'interactive':
+        return test_interactive_project(project_dir, config)
 
     case_dir = find_case_dir(project_dir)
     if case_dir is None:

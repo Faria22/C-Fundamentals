@@ -19,6 +19,7 @@ This repository contains my complete reimplementation of my CS1 assignments in C
 - `<project>/main.c` — entry point for each assignment reimplementation
 - `<project>/cases/` — paired `.in`/`.out` files that drive automated checks
 - `<project>/build/` — generated binaries created when running the tester (ignored by git)
+- `<project>/test_config.json` — optional overrides for projects with specialized tests (e.g., interactive cases)
 
 ## How to Run
 Use the bundled Python test runner to compile and validate one or more projects:
