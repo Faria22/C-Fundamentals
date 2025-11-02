@@ -2,15 +2,11 @@
 
 Determine which rooks on a large 2D chessboard can attack each other using dynamic memory and array lists in C.
 
-⸻
-
 ## Objective
 
 This project provides practice with:
 - Dynamic memory management (malloc, calloc, realloc, free)
 - Array lists and struct-based data organization
-
-⸻
 
 ## Problem Description
 
@@ -21,8 +17,6 @@ Each rook can attack another if:
 
 Your task is to determine, for each rook, how many and which other rooks threaten it.
 
-⸻
-
 ## Input Format
 - The first line contains an integer n (1 ≤ n ≤ 100,000): the number of rooks.
 - The next n lines each contain two integers r and c (1 ≤ r, c ≤ 1,000,000,000), representing the rook’s rank and file.
@@ -30,16 +24,12 @@ Your task is to determine, for each rook, how many and which other rooks threate
 - No two rooks occupy the same square.
 - There are at most 10,000 unique ranks and 10,000 unique files.
 
-⸻
-
 ## Output Format
 
 Output n lines.
 - The i-th line starts with an integer t, the number of rooks that can attack the i-th rook.
 - Then list t integers — the IDs of the rooks that threaten it (order does not matter).
 - All values on a line are separated by spaces.
-
-⸻
 
 ## Example
 
