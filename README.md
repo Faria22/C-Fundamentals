@@ -15,10 +15,10 @@ This repository contains my complete reimplementation of my CS1 assignments in C
 - A C toolchain such as GCC or Clang available on your `PATH`
 
 ## Repository Layout
-- `test_projects.py` — Python harness that builds projects and verifies cases
+- `test_projects.py` — Python tester that builds projects and verifies cases
 - `<project>/main.c` — entry point for each assignment reimplementation
 - `<project>/cases/` — paired `.in`/`.out` files that drive automated checks
-- `<project>/build/` — generated binaries created when running the harness (ignored by git)
+- `<project>/build/` — generated binaries created when running the tester (ignored by git)
 
 ## How to Run
 Use the bundled Python test runner to compile and validate one or more projects:
