@@ -10,6 +10,16 @@ This repository contains my complete reimplementation of my CS1 assignments in C
 - Structs and complex data types
 - Basic algorithms (sorting, searching)
 
+## Prerequisites
+- Python 3.9 or newer for the `test_projects.py` runner
+- A C toolchain such as GCC or Clang available on your `PATH`
+
+## Repository Layout
+- `test_projects.py` — Python harness that builds projects and verifies cases
+- `<project>/main.c` — entry point for each assignment reimplementation
+- `<project>/cases/` — paired `.in`/`.out` files that drive automated checks
+- `<project>/build/` — generated binaries created when running the harness (ignored by git)
+
 ## How to Run
 Use the bundled Python test runner to compile and validate one or more projects:
 
