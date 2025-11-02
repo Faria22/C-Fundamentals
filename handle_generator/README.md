@@ -2,15 +2,11 @@
 
 Generate short “handles” from names by keeping only the first and last letter of each word and removing all spaces.
 
-⸻
-
 ## Objective
 
 This project provides practice with:
 - Reading and writing to standard input/output in C
 - Using loops and conditionals
-
-⸻
 
 ## Problem Description
 
@@ -24,19 +20,13 @@ Example:
 
 John Smith -> JnSh
 
-⸻
-
 ## Input Format
 - The first line contains an integer n (1 <= n <= 100,000): the number of names to process.
 - The following n lines each contain one name (<= 100,000 characters, at least one non-space character).
 
-⸻
-
 ## Output Format
 
 Output n lines, each containing the generated handle.
-
-⸻
 
 ## Example
 
