@@ -167,7 +167,7 @@ def run_single_case(binary: Path, input_path: Path, expected_path: Path) -> tupl
     Returns
     -------
     tuple[bool, str]
-        Success flag and failure explanation (if any).
+        Success flag and textual output (transcript or error details).
     """
     with input_path.open('rb') as input_file:
         execution = subprocess.run(
@@ -263,7 +263,7 @@ def run_interactive_case(
     ]
     result = subprocess.run(command, check=False, capture_output=True, text=True)
     if result.returncode == 0:
-        return True, result.stdout.strip()
+        return True, result.stdout
 
     failure = (
         f"Interactive case '{case_name}' failed.\n"
@@ -348,6 +348,8 @@ def test_interactive_project(project_dir: Path, config: dict[str, Any]) -> tuple
             judge_binary,
             solution_binary,
         )
+        if success and message.strip():
+            print(message.rstrip())
         if not success:
             failures.append(message)
             break

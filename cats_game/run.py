@@ -154,6 +154,36 @@ def run_single_round(
     }
 
 
+def _format_stream(label: str, content: str) -> str:
+    """Return a formatted block for non-empty stream content.
+
+    Returns
+    -------
+    str
+        Labelled block or empty string when no output is available.
+    """
+    text = (content or '').strip()
+    if not text:
+        return ''
+    return f'{label}:\n{text}'
+
+
+def print_transcript(case_name: str, target: int, result: dict[str, Any]) -> None:
+    """Emit judge and solver streams for a completed interaction round."""
+    sections = [
+        _format_stream('Solver stdout', result['solver_stdout']),
+        _format_stream('Solver stderr', result['solver_stderr']),
+        _format_stream('Judge stdout', result['judge_stdout']),
+        _format_stream('Judge stderr', result['judge_stderr']),
+    ]
+    payload = '\n'.join(block for block in sections if block)
+    if not payload:
+        return
+
+    header = f'--- {case_name} / target {target} ---'
+    print(f'{header}\n{payload}\n')
+
+
 def evaluate_round_result(result: dict[str, Any]) -> tuple[bool, str]:
     """Interpret the recorded output from an interaction round.
 
@@ -212,6 +242,7 @@ def main() -> int:
         solution_cmd = [args.solution]
 
         result = run_single_round(judge_cmd, solution_cmd)
+        print_transcript(args.case, target, result)
         success, message = evaluate_round_result(result)
         if not success:
             detail = (
