@@ -11,4 +11,22 @@ This repository contains my complete reimplementation of my CS1 assignments in C
 - Basic algorithms (sorting, searching)
 
 ## How to Run
-TODO
+Use the bundled Python test runner to compile and validate one or more projects:
+
+```bash
+python3 test_projects.py chessland
+```
+
+Pass multiple project names to run their test suites sequentially:
+
+```bash
+python3 test_projects.py chessland handle_generator
+```
+
+Run every project's suite at once with the `--all` flag:
+
+```bash
+python3 test_projects.py --all
+```
+
+If you omit project names (and skip `--all`), the script lists the available options.
