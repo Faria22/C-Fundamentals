@@ -42,6 +42,16 @@
   {
     "name": "case_09",
     "max": 999991,
-    "answers": [1, 999991, 500000]
+    "answers": [1]
+  },
+  {
+    "name": "case_10",
+    "max": 999991,
+    "answers": [999991]
+  },
+  {
+    "name": "case_11",
+    "max": 999991,
+    "answers": [500000]
   }
 ]
