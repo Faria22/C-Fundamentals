@@ -2,5 +2,6 @@
   "type": "interactive",
   "runner": "run.py",
   "cases_file": "cases/cases.json",
-  "judge_source": "cat.c"
+  "judge_source": "cat.c",
+  "timeout_seconds": 10
 }

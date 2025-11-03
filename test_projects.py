@@ -228,6 +228,8 @@ def run_interactive_case(
     case_name: str,
     judge_binary: Path,
     solution_binary: Path,
+    *,
+    timeout: float | None = None,
 ) -> tuple[bool, str]:
     """Execute a single interactive case via the project runner script.
 
@@ -243,6 +245,8 @@ def run_interactive_case(
         Compiled judge binary path.
     solution_binary : Path
         Compiled solution binary path.
+    timeout : float | None, optional
+        Per-round timeout in seconds forwarded to the runner.
 
     Returns
     -------
@@ -261,6 +265,8 @@ def run_interactive_case(
         '--case',
         case_name,
     ]
+    if timeout is not None:
+        command.extend(['--timeout', f'{timeout:.6f}'])
     result = subprocess.run(command, check=False, capture_output=True, text=True)
     if result.returncode == 0:
         return True, result.stdout
@@ -335,6 +341,15 @@ def test_interactive_project(project_dir: Path, config: dict[str, Any]) -> tuple
     if not cases:
         return False, [f"No interactive cases defined in '{cases_path}'."]
 
+    timeout_value = None
+    if 'timeout_seconds' in config:
+        try:
+            timeout_value = float(config['timeout_seconds'])
+        except (TypeError, ValueError):
+            return False, [
+                f"Invalid 'timeout_seconds' value in config for '{project_dir.name}'.",
+            ]
+
     failures: list[str] = []
     for entry in cases:
         case_name = entry.get('name')
@@ -347,6 +362,7 @@ def test_interactive_project(project_dir: Path, config: dict[str, Any]) -> tuple
             case_name,
             judge_binary,
             solution_binary,
+            timeout=timeout_value,
         )
         if success and message.strip():
             print(message.rstrip())

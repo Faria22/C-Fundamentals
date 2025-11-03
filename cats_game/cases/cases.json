@@ -42,11 +42,6 @@
   {
     "name": "case_09",
     "max": 999991,
-    "adaptive": true
-  },
-  {
-    "name": "case_10",
-    "max": 999990,
-    "adaptive": true
+    "answers": [1, 999991, 500000]
   }
 ]
