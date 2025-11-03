@@ -7,8 +7,8 @@ static inline int min(int a, int b);
 int main() {
   int n;
   scanf("%d", &n);
-  char line[10000];
-  fgets(line, 10000, stdin); // remove the new line character
+  char line[10];
+  fgets(line, 10, stdin); // remove the new line character
 
   int low = 1, high = n;
   int prev_guess = 0;
