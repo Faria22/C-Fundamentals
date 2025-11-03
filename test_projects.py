@@ -364,8 +364,6 @@ def test_interactive_project(project_dir: Path, config: dict[str, Any]) -> tuple
             solution_binary,
             timeout=timeout_value,
         )
-        if success and message.strip():
-            print(message.rstrip())
         if not success:
             failures.append(message)
             break

@@ -27,6 +27,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--cases-file', type=Path, required=True, help='JSON file describing the available cases.')
     parser.add_argument('--case', required=True, help='Name of the case entry to execute.')
     parser.add_argument('--timeout', type=float, default=10.0, help='Per-case timeout in seconds (default: 10).')
+    parser.add_argument(
+        '--show-success-output',
+        action='store_true',
+        help='Display transcripts even when the case passes.',
+    )
     return parser.parse_args()
 
 
@@ -266,12 +271,15 @@ def main() -> int:
     if not targets:
         targets = [max_value]
 
+    show_success = args.show_success_output
+
     for target in targets:
         judge_cmd = [args.judge, str(max_value), str(target)]
         solver_cmd = [args.solution]
         result = execute_case(judge_cmd, solver_cmd, timeout=args.timeout)
-        print_transcript(args.case, target, result)
         success, message = evaluate_round(result)
+        if not success or show_success:
+            print_transcript(args.case, target, result)
         if not success:
             print(message, file=sys.stderr)
             return 1
