@@ -147,11 +147,19 @@ def execute_case(judge_cmd: list[str], solution_cmd: list[str], timeout: float) 
                 transcripts[f'{origin}_{stream}'] += line
 
                 if origin == 'judge' and stream == 'stdout' and solver.stdin:
-                    solver.stdin.write(line)
-                    solver.stdin.flush()
+                    try:
+                        solver.stdin.write(line)
+                        solver.stdin.flush()
+                    except BrokenPipeError:
+                        solver.stdin.close()
+                        solver.stdin = None
                 elif origin == 'solver' and stream == 'stdout' and judge.stdin:
-                    judge.stdin.write(line)
-                    judge.stdin.flush()
+                    try:
+                        judge.stdin.write(line)
+                        judge.stdin.flush()
+                    except BrokenPipeError:
+                        judge.stdin.close()
+                        judge.stdin = None
 
             if solver.poll() is not None and judge.poll() is not None:
                 break

@@ -350,12 +350,10 @@ def test_interactive_project(project_dir: Path, config: dict[str, Any]) -> tuple
                 f"Invalid 'timeout_seconds' value in config for '{project_dir.name}'.",
             ]
 
-    failures: list[str] = []
     for entry in cases:
         case_name = entry.get('name')
         if not case_name:
-            failures.append('Encountered interactive case entry without a name.')
-            continue
+            return False, ['Encountered interactive case entry without a name.']
         success, message = run_interactive_case(
             runner_path,
             cases_path,
@@ -364,12 +362,11 @@ def test_interactive_project(project_dir: Path, config: dict[str, Any]) -> tuple
             solution_binary,
             timeout=timeout_value,
         )
-        if not success:
-            failures.append(message)
-            break
+        if success:
+            print(f'{project_dir.name}: {case_name} passed.')
+            continue
+        return False, [message]
 
-    if failures:
-        return False, failures
     return True, []
 
 
@@ -410,14 +407,13 @@ def test_project(project_name: str) -> tuple[bool, list[str]]:
     except FileNotFoundError as error:
         return False, [str(error)]
 
-    failures: list[str] = []
     for input_path, expected_path in case_pairs:
         success, message = run_single_case(binary, input_path, expected_path)
-        if not success:
-            failures.append(message)
+        if success:
+            print(f'{project_name}: {input_path.name} passed.')
+            continue
+        return False, [message]
 
-    if failures:
-        return False, failures
     return True, []
 
 
