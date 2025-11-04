@@ -1,7 +1,6 @@
 """Compile and test configured C projects against their cases."""
 
 import argparse
-import difflib
 import json
 import subprocess
 import sys
@@ -185,20 +184,23 @@ def run_single_case(binary: Path, input_path: Path, expected_path: Path) -> tupl
         )
         return False, failure
 
-    actual_output = execution.stdout.splitlines(keepends=True)
-    expected_output = expected_path.read_text().splitlines(keepends=True)
-    if actual_output == expected_output:
+    actual_text = execution.stdout
+    expected_text = expected_path.read_text()
+    if actual_text == expected_text:
         return True, ''
 
-    diff = ''.join(
-        difflib.unified_diff(
-            expected_output,
-            actual_output,
-            fromfile=f'expected/{expected_path.name}',
-            tofile=f'actual/{input_path.stem}.out',
-        ),
+    def format_output(text: str) -> str:
+        if not text:
+            return '(empty output)\n'
+        return text if text.endswith('\n') else f'{text}\n'
+
+    failure = (
+        f"Output mismatch for '{input_path.name}'\n"
+        '=== Expected Output ===\n'
+        f'{format_output(expected_text)}'
+        '=== Actual Output ===\n'
+        f'{format_output(actual_text)}'
     )
-    failure = f"Output mismatch for '{input_path.name}'\n{diff or '(no diff generated)'}"
     return False, failure
 
 
