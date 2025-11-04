@@ -279,7 +279,12 @@ def run_interactive_case(
     return False, failure
 
 
-def test_interactive_project(project_dir: Path, config: dict[str, Any]) -> tuple[bool, list[str]]:
+def test_interactive_project(
+    project_dir: Path,
+    config: dict[str, Any],
+    *,
+    case_name: str | None = None,
+) -> tuple[bool, list[str]]:
     """Run interactive tests defined by the project configuration.
 
     Parameters
@@ -350,27 +355,35 @@ def test_interactive_project(project_dir: Path, config: dict[str, Any]) -> tuple
                 f"Invalid 'timeout_seconds' value in config for '{project_dir.name}'.",
             ]
 
-    for entry in cases:
-        case_name = entry.get('name')
-        if not case_name:
+    filtered_cases = cases
+    if case_name is not None:
+        filtered_cases = [entry for entry in cases if entry.get('name') == case_name]
+        if not filtered_cases:
+            return False, [
+                f"Interactive case '{case_name}' not found for project '{project_dir.name}'.",
+            ]
+
+    for entry in filtered_cases:
+        entry_name = entry.get('name')
+        if not entry_name:
             return False, ['Encountered interactive case entry without a name.']
         success, message = run_interactive_case(
             runner_path,
             cases_path,
-            case_name,
+            entry_name,
             judge_binary,
             solution_binary,
             timeout=timeout_value,
         )
         if success:
-            print(f'{project_dir.name}: {case_name} passed.')
+            print(f'{project_dir.name}: {entry_name} passed.')
             continue
         return False, [message]
 
     return True, []
 
 
-def test_project(project_name: str) -> tuple[bool, list[str]]:
+def test_project(project_name: str, *, case_name: str | None = None) -> tuple[bool, list[str]]:
     """Compile the project and run all cases, collecting any failures.
 
     Parameters
@@ -389,7 +402,7 @@ def test_project(project_name: str) -> tuple[bool, list[str]]:
 
     config = load_project_config(project_dir)
     if config and config.get('type') == 'interactive':
-        return test_interactive_project(project_dir, config)
+        return test_interactive_project(project_dir, config, case_name=case_name)
 
     case_dir = find_case_dir(project_dir)
     if case_dir is None:
@@ -406,6 +419,15 @@ def test_project(project_name: str) -> tuple[bool, list[str]]:
         case_pairs = load_case_pairs(case_dir)
     except FileNotFoundError as error:
         return False, [str(error)]
+
+    if case_name is not None:
+        case_pairs = [
+            pair for pair in case_pairs if pair[0].stem == case_name or pair[0].name == case_name
+        ]
+        if not case_pairs:
+            return False, [
+                f"Case '{case_name}' not found for project '{project_name}'.",
+            ]
 
     for input_path, expected_path in case_pairs:
         success, message = run_single_case(binary, input_path, expected_path)
@@ -438,6 +460,10 @@ def build_parser() -> argparse.ArgumentParser:
         '--all',
         action='store_true',
         help='Run the test suite for every available project.',
+    )
+    parser.add_argument(
+        '--case',
+        help='Run only the specified case for the selected project.',
     )
     return parser
 
@@ -485,10 +511,18 @@ def main(argv: list[str]) -> int:
             seen.add(project)
             ordered.append(project)
 
+    if args.case:
+        if args.all:
+            print('Cannot combine --all with --case.', file=sys.stderr)
+            return 1
+        if len(ordered) != 1:
+            print('Specify exactly one project when using --case.', file=sys.stderr)
+            return 1
+
     overall_success = True
     for project in ordered:
         print(f'== Testing project: {project} ==')
-        success, messages = test_project(project)
+        success, messages = test_project(project, case_name=args.case)
         if success:
             print('All test cases passed.')
         else:
