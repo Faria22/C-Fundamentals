@@ -6,7 +6,6 @@ Assemble a promotional phrase by chaining all provided handles so that each word
 
 This project provides practice with:
 - Recursive backtracking over constrained permutations
-- Brute-force search on small input sizes
 - String handling and bookkeeping in C
 
 ## Problem Description
@@ -54,8 +53,3 @@ desserts stressed
 
 - Sample 1: `red` ends with `d`, matching the start of `dads`. `dads` ends with `s`, matching `seek`, and `seek` ends with `k`, matching `karaoke`, so the chain is pretty.
 - Sample 2: Either ordering works because each word starts and ends with complementary letters (`stressed` → `desserts` or vice versa).
-
-## Hints
-- Model the search as recursion that tries each unused handle whose starting letter matches the current tail.
-- Return immediately once a complete pretty phrase is built to avoid exploring extra permutations.
-- Track which handles are already in the phrase so you don't reuse words.
