@@ -29,8 +29,6 @@ line **rows, **cols;
 int main() {
   scanf("%d %d", &num_rows, &num_cols);
   int **grid = create_grid();
-  // print_grid(grid);
-  // printf("\n");
 
   rows = calloc(num_rows, sizeof(line *));
   for (int row_idx = 0; row_idx < num_rows; row_idx++) {
@@ -52,17 +50,12 @@ int main() {
       fill_row(grid, row_idx, rows[row_idx]);
     }
   }
-  // print_grid(grid);
-  // printf("\n");
   // Prefill any columns fully determined by their clues
   for (int col_idx = 0; col_idx < num_cols; col_idx++) {
     if (determinable_line(cols[col_idx], num_rows)) {
       fill_col(grid, col_idx, cols[col_idx]);
     }
   }
-
-  // print_grid(grid);
-  // printf("\n");
 
   solve_it(grid, 0, 0);
 
@@ -94,7 +87,8 @@ int solve_it(int **grid, int row, int col) {
     return 1;
 
   if (grid[row][col] == empty) {
-    for (int x = 1; x > -1; x--) { // try black before red to hit dense clues faster
+    for (int x = 1; x > -1;
+         x--) { // try black before red to hit dense clues faster
       grid[row][col] = x;
       if (is_valid(grid, row, col)) {
         if (solve_it(grid, row, col + 1))
@@ -120,11 +114,12 @@ int is_valid(int **grid, int row, int col) {
       break;
     }
     if (cell == red) {
-      if (num_items_in_group > 0) {
-        if (num_items_in_group != rows[row]->groups_size[group_idx - 1]) {
+      if (num_items_in_group > 0) { // red after black group
+        if (num_items_in_group !=
+            rows[row]->groups_size[group_idx - 1]) { // Check black group size
           return 0;
         }
-        num_items_in_group = 0;
+        num_items_in_group = 0; // reset for next group
       }
       continue;
     }
@@ -138,12 +133,13 @@ int is_valid(int **grid, int row, int col) {
       return 0;
     }
   }
+  // Last item is black, check if it matches the group size
   if (!line_has_empty && grid[row][num_cols - 1] == black &&
       num_items_in_group != rows[row]->groups_size[group_idx - 1]) {
     return 0;
   }
-  if (!line_has_empty &&
-      group_idx != rows[row]->num_groups) { // completed line but not all groups
+  // completed line but not all groups
+  if (!line_has_empty && group_idx != rows[row]->num_groups) {
     return 0;
   }
 
@@ -186,6 +182,7 @@ int is_valid(int **grid, int row, int col) {
   }
   return 1;
 }
+
 void print_grid(int **grid) {
   for (int row = 0; row < num_rows; row++) {
     for (int col = 0; col < num_cols; col++) {
@@ -239,7 +236,8 @@ void fill_row(int **grid, int row_idx, line *row) {
     }
     return;
   }
-  // Lay down the exact run lengths, inserting a single separator red between runs
+  // Lay down the exact run lengths, inserting a single separator red between
+  // runs
   for (int group_idx = 0; group_idx < num_groups; group_idx++) {
     for (int idx = 0; idx < row->groups_size[group_idx]; idx++) {
       grid[row_idx][col_idx] = black;
